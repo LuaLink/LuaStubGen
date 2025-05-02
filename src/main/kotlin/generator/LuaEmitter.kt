@@ -43,11 +43,7 @@ class LuaEmitter {
                 sb.appendLine("---@param $paramName${if (!param.required) "?" else ""} $luaType ${param.comment ?: ""}")
             }
 
-            if (!doc.returnComment.isNullOrBlank()) {
-                sb.appendLine("---@return ${mapJavaTypeToLua(method.returnType)} ${doc.returnComment}")
-            } else {
-                sb.appendLine("---@return nil")
-            }
+            sb.appendLine("---@return ${mapJavaTypeToLua(method.returnType)} ${doc.returnComment ?: ""}")
 
             if (doc.mainComment.isNotBlank()) {
                 sb.appendLine("--- ${doc.mainComment}")
