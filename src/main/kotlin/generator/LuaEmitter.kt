@@ -8,6 +8,7 @@ import util.mapJavaTypeToLua
 class LuaEmitter {
     fun emit(parsedClass: ParsedClass): String {
         val sb = StringBuilder()
+        sb.appendLine("---@meta")
         sb.appendLine("-- ${parsedClass.packageName}.${parsedClass.name}")
         sb.appendLine(
             "---@class ${parsedClass.name}${
