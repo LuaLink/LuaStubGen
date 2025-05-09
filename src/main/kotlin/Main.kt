@@ -13,34 +13,41 @@ fun main(args: Array<String>) {
         return
     }
 
+    // Parse the --output-dir flag
+    val outputDirFlag = args.find { it.startsWith("--output-dir=") }
+    val outputDirPath = outputDirFlag?.substringAfter("=") ?: "./stubs"
+    val outputDir = File(outputDirPath)
+
+    // Ensure the output directory exists
+    if (!outputDir.exists() && !outputDir.mkdirs()) {
+        println("Error: Could not create output directory at $outputDirPath")
+        return
+    }
+
     // Initialize the emitter
     val luaEmitter = LuaEmitter()
 
-    args.forEach { jarFilePath ->
-        // Check if the file exists
+    args.filterNot { it.startsWith("--output-dir=") }.forEach { jarFilePath ->
         val file = File(jarFilePath)
         if (!file.exists()) {
             println("Warning: File $jarFilePath does not exist.")
             return@forEach
         }
 
-        // Determine if the file is a source JAR or compiled JAR
-        val parser : ClassParser = if (jarFilePath.endsWith("-sources.jar")) {
+        val parser: ClassParser = if (jarFilePath.endsWith("-sources.jar")) {
             println("Using JavaSourceParser for $jarFilePath")
             JavaSourceParser()
         } else {
             println("Using CompiledClassParser for $jarFilePath")
-            JavaSourceParser()
+            JavaSourceParser() // Placeholder for compiled class parser
         }
 
         try {
-            // Parse the JAR file
             val parsedClasses = parser.parse(JarFile(file))
 
-            // Generate Lua stubs for each parsed class
             parsedClasses.forEach { parsedClass ->
                 val luaOutput = luaEmitter.emit(parsedClass)
-                val outputFile = File("stubs/${parsedClass.name}.lua")
+                val outputFile = File(outputDir, "${parsedClass.name}.lua")
                 outputFile.writeText(luaOutput)
                 println("Generated Lua stubs for ${parsedClass.name} in ${outputFile.absolutePath}")
             }
