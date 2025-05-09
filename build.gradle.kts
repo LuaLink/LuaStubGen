@@ -16,6 +16,14 @@ dependencies {
     implementation("com.github.javaparser:javaparser-symbol-solver-core:3.26.4")
 }
 
+tasks.jar {
+    manifest {
+        attributes(
+            "Main-Class" to "main.kotlin.MainKt"
+        )
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
 }
