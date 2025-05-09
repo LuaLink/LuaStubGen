@@ -134,12 +134,4 @@ class JavaSourceParser : ClassParser {
             )
         }
     }
-
-    private fun com.github.javaparser.ast.type.Type.resolveOrNull(): ResolvedReferenceTypeDeclaration? {
-        return try {
-            this.resolve().asReferenceType().typeDeclaration.orElse(null)
-        } catch (e: Exception) {
-            null
-        }
-    }
 }
