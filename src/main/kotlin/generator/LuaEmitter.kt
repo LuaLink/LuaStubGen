@@ -9,12 +9,31 @@ class LuaEmitter {
         val sb = StringBuilder()
         sb.appendLine("-- ${parsedClass.packageName}.${parsedClass.name}")
         sb.appendLine(
-            "---@class ${parsedClass.name} ${
-                if (parsedClass.extendedTypes.isNotEmpty()) parsedClass.extendedTypes.joinToString(
-                    " : "
-                ) else ""
+            "---@class ${parsedClass.name}${
+                if (parsedClass.extendedTypes.isNotEmpty() || parsedClass.implementedTypes.isNotEmpty())
+                    ": " + (parsedClass.extendedTypes + parsedClass.implementedTypes).joinToString(", ")
+                else ""
             }"
         )
+
+        // Process fields (variables)
+        parsedClass.fields.forEach { field ->
+            sb.appendLine("---@field ${field.name} ${mapJavaTypeToLua(field.type)}")
+        }
+
+        parsedClass.constructors.forEach { constructor ->
+            val doc = extractJavaDocInfo(constructor.comment)
+
+            val params = constructor.parameters.joinToString(", ") { param ->
+                val paramName = param.name
+                val luaType = mapJavaTypeToLua(param.type)
+                "$paramName: $luaType${if (!param.required) "?" else ""}"
+            }
+
+            val returnType = mapJavaTypeToLua(constructor.returnType)
+            sb.appendLine("---@overload fun($params): $returnType ${doc.returnComment ?: ""}")
+        }
+
         sb.appendLine("local ${parsedClass.name} = {}\n")
 
         val docInfo = extractJavaDocInfo(parsedClass.classComment)
@@ -22,10 +41,6 @@ class LuaEmitter {
             sb.insert(0, "--- ${docInfo.mainComment}\n")
         }
 
-        // Process fields (variables)
-        parsedClass.fields.forEach { field ->
-            sb.appendLine("---@field ${field.name} ${mapJavaTypeToLua(field.type)}")
-        }
 
         // Process methods
         parsedClass.methods.forEach { method ->

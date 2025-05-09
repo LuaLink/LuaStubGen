@@ -2,6 +2,7 @@ package parser
 
 import com.github.javaparser.JavaParser
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import com.github.javaparser.ast.body.ConstructorDeclaration
 import com.github.javaparser.ast.body.EnumDeclaration
 import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
@@ -14,9 +15,7 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 
 class JavaSourceParser : ClassParser {
-
     private val parser = JavaParser()
-    private val combinedTypeSolver = CombinedTypeSolver() // Ensure this is properly initialized
 
     override fun parse(jar: JarFile): List<ParsedClass> {
         val parsedClasses = mutableListOf<ParsedClass>()
@@ -60,16 +59,7 @@ class JavaSourceParser : ClassParser {
             val methods = cls.methods.map { parseMethod(it, cls.nameAsString) }
             val fields = cls.fields.flatMap { parseField(it) }
 
-            // Resolve extended types and their methods
-            val extendedTypes = cls.extendedTypes.mapNotNull { type ->
-                val resolvedType = type.resolveOrNull()
-                resolvedType?.qualifiedName
-            }
-
-            /*val extendedMethods = extendedTypes.flatMap { qualifiedName ->
-                val resolvedClass = combinedTypeSolver.tryToSolveType(qualifiedName).orElse(null)
-                resolvedClass?.methods?.map { parseMethod(it.declaration, resolvedClass.name) } ?: emptyList()
-            }*/
+            // Gather all constructors and parse them
 
             parsedClass = ParsedClass(
                 name = cls.nameAsString,
@@ -77,12 +67,35 @@ class JavaSourceParser : ClassParser {
                 fields = fields,
                 methods = methods, // Combine methods
                 classComment = cls.comment.map { extractJavaDocInfo(it.content).mainComment }.orElse(null),
-                //extendedTypes = extendedTypes, // Broken at the moment
+                extendedTypes = cls.extendedTypes.map { it.asString() },
+                implementedTypes = cls.implementedTypes.map { it.asString() },
+                constructors = cls.constructors.map { parseConstructor(it, cls.nameAsString) },
                 isEnum = false
             )
         }
 
         return parsedClass
+    }
+
+    private fun parseConstructor(constructor: ConstructorDeclaration, className: String): ParsedMethod {
+        return ParsedMethod(
+            name = constructor.nameAsString,
+            returnType = className,
+            parameters = constructor.parameters.map { param ->
+                // Check for nullability in the parameter type. Not sure why but it seems to include annotations in the type string
+                val isNullableComment = param.type.toString()?.contains("@Nullable") ?: false
+
+                ParsedParameter(
+                    name = param.nameAsString,
+                    type = param.type.toString().replace("@Nullable ", ""),
+                    required = !isNullableComment,
+                )
+            },
+            comment = constructor.comment.map { extractJavaDocInfo(it.content).mainComment }.orElse(null),
+            isDeprecated = constructor.annotations.any { it.nameAsString == "Deprecated" },
+            isAsync = false, // Constructors are not async
+            isConstructor = true
+        )
     }
 
     private fun parseMethod(method: MethodDeclaration, className: String): ParsedMethod {
@@ -101,7 +114,10 @@ class JavaSourceParser : ClassParser {
             },
             comment = method.comment.map { extractJavaDocInfo(it.content).mainComment }.orElse(null),
             isDeprecated = method.annotations.any { it.nameAsString == "Deprecated" },
-            isAsync = method.nameAsString.contains("Async", ignoreCase = true) // Most Bukkit methods that are async have "Async" in their name
+            isAsync = method.nameAsString.contains(
+                "Async",
+                ignoreCase = true
+            ) // Most Bukkit methods that are async have "Async" in their name
         )
     }
 

@@ -1,7 +1,6 @@
 package util
 
 fun mapJavaTypeToLua(javaType: String): String {
-    println(javaType)
     return when {
         javaType.startsWith("List<") -> {
             val genericType = javaType.substringAfter("List<").substringBeforeLast(">")

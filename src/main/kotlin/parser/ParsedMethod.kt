@@ -6,7 +6,8 @@ data class ParsedMethod(
     val parameters: List<ParsedParameter>,
     val comment: String?,
     val isDeprecated: Boolean = false,
-    val isAsync: Boolean = false
+    val isAsync: Boolean = false,
+    val isConstructor: Boolean = false,
 )
 
 data class ParsedParameter(
