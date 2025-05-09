@@ -44,7 +44,8 @@ class JavaSourceParser : ClassParser {
                 fields = enumDecl.entries.map {
                     ParsedField(
                         name = it.nameAsString,
-                        type = "string",
+                        type = enumDecl.nameAsString,
+                        visibility = Visibility.PUBLIC,
                         comment = it.comment.map { c -> extractJavaDocInfo(c.content).mainComment }.orElse(null)
                     )
                 },
@@ -91,6 +92,7 @@ class JavaSourceParser : ClassParser {
                     required = !isNullableComment,
                 )
             },
+            visibility = Visibility.fromString(constructor.accessSpecifier.toString().uppercase()),
             comment = constructor.comment.map { extractJavaDocInfo(it.content).mainComment }.orElse(null),
             isDeprecated = constructor.annotations.any { it.nameAsString == "Deprecated" },
             isAsync = false, // Constructors are not async
@@ -112,6 +114,7 @@ class JavaSourceParser : ClassParser {
                     required = !isNullableComment,
                 )
             },
+            visibility = Visibility.fromString(method.accessSpecifier.toString().uppercase()),
             comment = method.comment.map { extractJavaDocInfo(it.content).mainComment }.orElse(null),
             isDeprecated = method.annotations.any { it.nameAsString == "Deprecated" },
             isAsync = method.nameAsString.contains(
@@ -126,6 +129,7 @@ class JavaSourceParser : ClassParser {
             ParsedField(
                 name = variable.nameAsString,
                 type = field.elementType.asString(),
+                visibility = Visibility.fromString(field.accessSpecifier.toString().uppercase()),
                 comment = field.comment.map { extractJavaDocInfo(it.content).mainComment }.orElse(null)
             )
         }

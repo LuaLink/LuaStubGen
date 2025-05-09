@@ -3,6 +3,7 @@ package parser
 data class ParsedMethod(
     val name: String,
     val returnType: String,
+    val visibility: Visibility,
     val parameters: List<ParsedParameter>,
     val comment: String?,
     val isDeprecated: Boolean = false,

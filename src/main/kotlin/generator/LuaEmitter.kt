@@ -1,6 +1,7 @@
 package generator
 
 import parser.ParsedClass
+import parser.Visibility
 import util.extractJavaDocInfo
 import util.mapJavaTypeToLua
 
@@ -18,7 +19,7 @@ class LuaEmitter {
 
         // Process fields (variables)
         parsedClass.fields.forEach { field ->
-            sb.appendLine("---@field ${field.name} ${mapJavaTypeToLua(field.type)}")
+            sb.appendLine("---@field ${field.visibility.toString().lowercase()} ${field.name} ${mapJavaTypeToLua(field.type)}")
         }
 
         parsedClass.constructors.forEach { constructor ->
@@ -56,6 +57,12 @@ class LuaEmitter {
                 val paramName = param.name
                 val luaType = mapJavaTypeToLua(param.type)
                 sb.appendLine("---@param $paramName${if (!param.required) "?" else ""} $luaType ${param.comment ?: ""}")
+            }
+
+            when (method.visibility) {
+                Visibility.PUBLIC -> sb.appendLine("---@public")
+                Visibility.PROTECTED -> sb.appendLine("---@protected")
+                Visibility.PRIVATE -> sb.appendLine("---@private")
             }
 
             sb.appendLine("---@return ${mapJavaTypeToLua(method.returnType)} ${doc.returnComment ?: ""}")
