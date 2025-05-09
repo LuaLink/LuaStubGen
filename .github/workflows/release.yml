@@ -19,15 +19,15 @@ jobs:
         with:
           java-version: 21
           distribution: 'adopt'
-      - name: Build and Publish to Modrinth
+      - name: Build
         run: |
           ./gradlew build
-      - name: Create a Release
-        uses: elgohr/Github-Release-Action@c5ea99036abb741a89f8bf1f2cd7fba845e3313a # v5
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          title: Build ${{ github.run_number }}
-          tag: ${{ github.run_number }}
-          workdir: ./build/libs/
+          # Configuring release name and tag.
+          name: Build \#${{ github.run_number }}
+          tag_name: ${{ github.run_number }}
+          # Configuring files that are attached to the release.
+          files: "build/libs/LuaStubGen-1.0-SNAPSHOT.jar"
 
