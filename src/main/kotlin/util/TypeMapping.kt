@@ -2,18 +2,18 @@ package util
 
 fun mapJavaTypeToLua(javaType: String): String {
     return when {
-        javaType.startsWith("List<") -> {
-            val genericType = javaType.substringAfter("List<").substringBeforeLast(">")
+        javaType.startsWith("java.util.List<") -> {
+            val genericType = javaType.substringAfter("java.util.List<").substringBeforeLast(">")
             "table<${mapJavaTypeToLua(genericType)}>"
         }
 
-        javaType.startsWith("Set<") -> {
-            val genericType = javaType.substringAfter("Set<").substringBeforeLast(">")
+        javaType.startsWith("java.util.Set<") -> {
+            val genericType = javaType.substringAfter("java.util.Set<").substringBeforeLast(">")
             "table<${mapJavaTypeToLua(genericType)}>"
         }
 
-        javaType.startsWith("Map<") -> {
-            val keyValueTypes = javaType.substringAfter("Map<").substringBeforeLast(">").split(",")
+        javaType.startsWith("java.util.Map<") -> {
+            val keyValueTypes = javaType.substringAfter("java.util.Map<").substringBeforeLast(">").split(",")
             if (keyValueTypes.size == 2) {
                 val keyType = mapJavaTypeToLua(keyValueTypes[0].trim())
                 val valueType = mapJavaTypeToLua(keyValueTypes[1].trim())
@@ -28,8 +28,8 @@ fun mapJavaTypeToLua(javaType: String): String {
             "table<${mapJavaTypeToLua(elementType)}>"
         }
 
-        javaType.startsWith("Class<") -> {
-            val innerType = javaType.substringAfter("Class<").substringBeforeLast(">")
+        javaType.startsWith("java.lang.Class<") -> {
+            val innerType = javaType.substringAfter("java.lang.Class<").substringBeforeLast(">")
             if (innerType.startsWith("? extends")) {
                 val baseType = innerType.removePrefix("? extends ").trim()
                 "${mapJavaTypeToLua(baseType)}?"
