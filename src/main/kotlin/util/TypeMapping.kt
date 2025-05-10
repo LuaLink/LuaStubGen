@@ -32,9 +32,9 @@ fun mapJavaTypeToLua(javaType: String): String {
             val innerType = javaType.substringAfter("Class<").substringBeforeLast(">")
             if (innerType.startsWith("? extends")) {
                 val baseType = innerType.removePrefix("? extends ").trim()
-                "optional<${mapJavaTypeToLua(baseType)}>"
+                "${mapJavaTypeToLua(baseType)}?"
             } else {
-                "optional<${mapJavaTypeToLua(innerType)}>"
+                "${mapJavaTypeToLua(innerType)}?"
             }
         }
 
@@ -43,10 +43,24 @@ fun mapJavaTypeToLua(javaType: String): String {
             "${mapJavaTypeToLua(baseType)}?"
         }
 
-        javaType in listOf("int", "float", "double", "long", "short", "byte") -> "number"
-        javaType == "boolean" -> "boolean"
-        javaType in listOf("char", "String") -> "string"
+        javaType in listOf(
+            "java.lang.Integer",
+            "java.lang.Float",
+            "java.lang.Double",
+            "java.lang.Long",
+            "java.lang.Short",
+            "java.lang.Byte",
+            "int",
+            "float",
+            "double",
+            "long",
+            "short",
+            "byte"
+        ) -> "number"
+
+        javaType in listOf("java.lang.Boolean", "boolean") -> "boolean"
+        javaType in listOf("java.lang.Character", "java.lang.String", "char", "String") -> "string"
         javaType == "void" -> "nil"
-        else -> javaType.substringAfterLast(".") // Simplify fully qualified names
+        else -> javaType // Default case for other types
     }
 }

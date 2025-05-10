@@ -6,6 +6,7 @@ data class ParsedMethod(
     val visibility: Visibility,
     val parameters: List<ParsedParameter>,
     val comment: String?,
+    val returnComment: String? = null,
     val isDeprecated: Boolean = false,
     val isAsync: Boolean = false,
     val isConstructor: Boolean = false,

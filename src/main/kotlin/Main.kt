@@ -1,4 +1,5 @@
 package main.kotlin
+
 import generator.LuaEmitter
 import parser.ClassParser
 import parser.JavaSourceParser
@@ -27,36 +28,23 @@ fun main(args: Array<String>) {
     // Initialize the emitter
     val luaEmitter = LuaEmitter()
 
-    args.filterNot { it.startsWith("--output-dir=") }.forEach { jarFilePath ->
-        val file = File(jarFilePath)
-        if (!file.exists()) {
-            println("Warning: File $jarFilePath does not exist.")
-            return@forEach
-        }
+    var parser: ClassParser = JavaSourceParser(args.filter { !it.startsWith("--output-dir=") }.map { File(it) })
 
-        val parser: ClassParser = if (jarFilePath.endsWith("-sources.jar")) {
-            println("Using JavaSourceParser for $jarFilePath")
-            JavaSourceParser()
-        } else {
-            println("Using CompiledClassParser for $jarFilePath")
-            JavaSourceParser() // Placeholder for compiled class parser
-        }
 
-        try {
-            val parsedClasses = parser.parse(JarFile(file))
+    try {
+        val parsedClasses = parser.parse()
 
-            parsedClasses.forEach { parsedClass ->
-                val luaOutput = luaEmitter.emit(parsedClass)
-                val outputFile = File(outputDir, "${parsedClass.name}.lua")
-                outputFile.writeText(luaOutput)
-                println("Generated Lua stubs for ${parsedClass.name} in ${outputFile.absolutePath}")
-            }
-            val importsOutput = luaEmitter.emitAvailableImports(parsedClasses)
-            val importsFile = File(outputDir, "imports.lua")
-            importsFile.writeText(importsOutput)
-            println("Generated Lua imports in ${importsFile.absolutePath}")
-        } catch (e: Exception) {
-            println("Error processing $jarFilePath: ${e.message}")
+        parsedClasses.forEach { parsedClass ->
+            val luaOutput = luaEmitter.emit(parsedClass)
+            val outputFile = File(outputDir, "${parsedClass.packageName}.${parsedClass.name}.lua")
+            outputFile.writeText(luaOutput)
+            println("Generated Lua stubs for ${parsedClass.name} in ${outputFile.absolutePath}")
         }
+        val importsOutput = luaEmitter.emitAvailableImports(parsedClasses)
+        val importsFile = File(outputDir, "imports.lua")
+        importsFile.writeText(importsOutput)
+        println("Generated Lua imports in ${importsFile.absolutePath}")
+    } catch (e: Exception) {
+        println("Error processing: ${e.message}")
     }
 }

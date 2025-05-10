@@ -2,7 +2,6 @@ package generator
 
 import parser.ParsedClass
 import parser.Visibility
-import util.extractJavaDocInfo
 import util.mapJavaTypeToLua
 
 class LuaEmitter {
@@ -11,7 +10,7 @@ class LuaEmitter {
         sb.appendLine("---@meta")
         sb.appendLine("-- ${parsedClass.packageName}.${parsedClass.name}")
         sb.appendLine(
-            "---@class ${parsedClass.name}${
+            "---@class ${parsedClass.packageName}.${parsedClass.name}${
                 if (parsedClass.extendedTypes.isNotEmpty() || parsedClass.implementedTypes.isNotEmpty())
                     ": " + (parsedClass.extendedTypes + parsedClass.implementedTypes).joinToString(", ")
                 else ""
@@ -28,7 +27,6 @@ class LuaEmitter {
         }
 
         parsedClass.constructors.forEach { constructor ->
-            val doc = extractJavaDocInfo(constructor.comment)
 
             val params = constructor.parameters.joinToString(", ") { param ->
                 val paramName = param.name
@@ -37,21 +35,19 @@ class LuaEmitter {
             }
 
             val returnType = mapJavaTypeToLua(constructor.returnType)
-            sb.appendLine("---@overload fun($params): $returnType ${doc.returnComment ?: ""}")
+            sb.appendLine("---@overload fun($params): $returnType")
         }
 
         sb.appendLine("local ${parsedClass.name} = {}\n")
 
-        val docInfo = extractJavaDocInfo(parsedClass.classComment)
-        if (docInfo.mainComment.isNotBlank()) {
-            sb.insert(0, "--- ${docInfo.mainComment}\n")
+        val docInfo = parsedClass.classComment
+        if (docInfo!!.isNotBlank()) {
+            sb.insert(0, "--- ${docInfo}\n")
         }
 
 
         // Process methods
         parsedClass.methods.forEach { method ->
-            val doc = extractJavaDocInfo(method.comment)
-
             if (method.isDeprecated) {
                 sb.appendLine("---@deprecated")
             }
@@ -70,10 +66,10 @@ class LuaEmitter {
                 Visibility.PRIVATE -> sb.appendLine("---@private")
             }
 
-            sb.appendLine("---@return ${mapJavaTypeToLua(method.returnType)} ${doc.returnComment ?: ""}")
+            sb.appendLine("---@return ${mapJavaTypeToLua(method.returnType)} ${method.returnComment ?: ""}")
 
-            if (doc.mainComment.isNotBlank()) {
-                sb.appendLine("--- ${doc.mainComment}")
+            if (method.comment!!.isNotBlank()) {
+                sb.appendLine("--- ${method.comment}")
             }
 
 
