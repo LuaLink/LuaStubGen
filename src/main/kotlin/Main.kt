@@ -51,6 +51,10 @@ fun main(args: Array<String>) {
                 outputFile.writeText(luaOutput)
                 println("Generated Lua stubs for ${parsedClass.name} in ${outputFile.absolutePath}")
             }
+            val importsOutput = luaEmitter.emitAvailableImports(parsedClasses)
+            val importsFile = File(outputDir, "imports.lua")
+            importsFile.writeText(importsOutput)
+            println("Generated Lua imports in ${importsFile.absolutePath}")
         } catch (e: Exception) {
             println("Error processing $jarFilePath: ${e.message}")
         }

@@ -20,7 +20,11 @@ class LuaEmitter {
 
         // Process fields (variables)
         parsedClass.fields.forEach { field ->
-            sb.appendLine("---@field ${field.visibility.toString().lowercase()} ${field.name} ${mapJavaTypeToLua(field.type)}")
+            sb.appendLine(
+                "---@field ${
+                    field.visibility.toString().lowercase()
+                } ${field.name} ${mapJavaTypeToLua(field.type)}"
+            )
         }
 
         parsedClass.constructors.forEach { constructor ->
@@ -77,6 +81,18 @@ class LuaEmitter {
             sb.appendLine("function ${parsedClass.name}:$name(${method.parameters.joinToString(", ") { it.name }}) end\n")
         }
 
+        return sb.toString()
+    }
+
+    fun emitAvailableImports(parsedClasses: List<ParsedClass>): String {
+        val sb = StringBuilder()
+        sb.appendLine("---@alias JavaClasses")
+        parsedClasses.forEach { parsedClass ->
+            val fullName = "${parsedClass.packageName}.${parsedClass.name}"
+            sb.appendLine("---| '\"$fullName\"'")
+        }
+        // Add normal string to the alias as to not cause warnings when someone uses an import not in the list
+        sb.appendLine("---| string")
         return sb.toString()
     }
 }
