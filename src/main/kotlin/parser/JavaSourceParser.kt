@@ -97,7 +97,7 @@ class JavaSourceParser(private val jarFiles: List<File>) : ClassParser {
                 fields = enumDecl.entries.map {
                     ParsedField(
                         name = it.nameAsString,
-                        type = enumDecl.fullyQualifiedName.toString(),
+                        type = enumDecl.fullyQualifiedName.get().toString(),
                         visibility = Visibility.PUBLIC,
                         comment = extractMainComment(it.javadoc.getOrNull())
                     )
