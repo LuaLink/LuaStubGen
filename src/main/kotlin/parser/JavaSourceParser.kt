@@ -97,7 +97,7 @@ class JavaSourceParser(private val jarFiles: List<File>) : ClassParser {
                 fields = enumDecl.entries.map {
                     ParsedField(
                         name = it.nameAsString,
-                        type = enumDecl.fullyQualifiedName.get().toString(),
+                        type = enumDecl.fullyQualifiedName.get(),
                         visibility = Visibility.PUBLIC,
                         comment = extractMainComment(it.javadoc.getOrNull())
                     )
@@ -124,7 +124,7 @@ class JavaSourceParser(private val jarFiles: List<File>) : ClassParser {
                 classComment = extractMainComment(cls.javadoc.getOrNull()),
                 extendedTypes = cls.extendedTypes.map { getFullyQualifiedName(it) },
                 implementedTypes = cls.implementedTypes.map { getFullyQualifiedName(it) },
-                constructors = cls.constructors.map { parseConstructor(it, cls.nameAsString) },
+                constructors = cls.constructors.map { parseConstructor(it, cls.fullyQualifiedName.get()) },
                 isEnum = false
             )
             parsedClasses[cls.fullyQualifiedName.toString()] = parsedClass!!
