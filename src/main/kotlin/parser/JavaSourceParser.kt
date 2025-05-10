@@ -143,7 +143,7 @@ class JavaSourceParser(private val jarFiles: List<File>) : ClassParser {
 
                 ParsedParameter(
                     name = param.nameAsString,
-                    type = param.type.toString().replace("@Nullable ", ""),
+                    type = getFullyQualifiedName(param.type),
                     required = !isNullableComment,
                 )
             },
