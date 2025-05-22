@@ -84,7 +84,7 @@ class LuaEmitter {
         val sb = StringBuilder()
         sb.appendLine("---@alias JavaClasses string|")
         parsedClasses.forEach { parsedClass ->
-            val fullName = "${parsedClass.packageName}.${parsedClass.name}"
+            val fullName = "${parsedClass.fqcn}"
             sb.appendLine("---| '\"$fullName\"' ")
         }
         // Add normal string to the alias as to not cause warnings when someone uses an import not in the list
