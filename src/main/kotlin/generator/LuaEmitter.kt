@@ -8,9 +8,9 @@ class LuaEmitter {
     fun emit(parsedClass: ParsedClass): String {
         val sb = StringBuilder()
         sb.appendLine("---@meta")
-        sb.appendLine("-- ${parsedClass.packageName}.${parsedClass.name}")
+        sb.appendLine("-- ${parsedClass.fqcn}")
         sb.appendLine(
-            "---@class ${parsedClass.packageName}.${parsedClass.name}${
+            "---@class ${parsedClass.fqcn}${
                 if (parsedClass.extendedTypes.isNotEmpty() || parsedClass.implementedTypes.isNotEmpty())
                     ": " + (parsedClass.extendedTypes + parsedClass.implementedTypes).joinToString(", ")
                 else ""

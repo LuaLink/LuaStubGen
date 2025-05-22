@@ -36,7 +36,7 @@ fun main(args: Array<String>) {
 
         parsedClasses.forEach { parsedClass ->
             val luaOutput = luaEmitter.emit(parsedClass)
-            val outputFile = File(outputDir, "${parsedClass.packageName}.${parsedClass.name}.lua")
+            val outputFile = File(outputDir, "${parsedClass.fqcn}.lua")
             outputFile.writeText(luaOutput)
             println("Generated Lua stubs for ${parsedClass.name} in ${outputFile.absolutePath}")
         }

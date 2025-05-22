@@ -91,46 +91,78 @@ class JavaSourceParser(private val jarFiles: List<File>) : ClassParser {
 
         // Handle enum
         cu.findFirst(EnumDeclaration::class.java).ifPresent { enumDecl ->
-            parsedClass = ParsedClass(
-                name = enumDecl.nameAsString,
-                packageName = pkgName,
-                fields = enumDecl.entries.map {
-                    ParsedField(
-                        name = it.nameAsString,
-                        type = enumDecl.fullyQualifiedName.get(),
-                        visibility = Visibility.PUBLIC,
-                        comment = extractMainComment(it.javadoc.getOrNull())
-                    )
-                },
-                methods = emptyList(),
-                classComment = extractMainComment(enumDecl.javadoc.getOrNull()),
-                isEnum = true
-            )
-            parsedClasses[enumDecl.fullyQualifiedName.toString()] = parsedClass!!
+            parsedClass = parseEnum(enumDecl, pkgName)
+            parsedClasses[enumDecl.fullyQualifiedName.get()] = parsedClass!!
         }
 
         // Handle class or interface
         cu.findFirst(ClassOrInterfaceDeclaration::class.java).ifPresent { cls ->
-            val methods = cls.methods.map { parseMethod(it, cls.nameAsString) }
-            val fields = cls.fields.flatMap { parseField(it) }
-
-            // Gather all constructors and parse them
-
-            parsedClass = ParsedClass(
-                name = cls.nameAsString,
-                packageName = pkgName,
-                fields = fields,
-                methods = methods, // Combine methods
-                classComment = extractMainComment(cls.javadoc.getOrNull()),
-                extendedTypes = cls.extendedTypes.map { getFullyQualifiedName(it) },
-                implementedTypes = cls.implementedTypes.map { getFullyQualifiedName(it) },
-                constructors = cls.constructors.map { parseConstructor(it, cls.fullyQualifiedName.get()) },
-                isEnum = false
-            )
-            parsedClasses[cls.fullyQualifiedName.toString()] = parsedClass!!
+            parsedClass = parseClassOrInterface(cls, pkgName)
+            parsedClasses[cls.fullyQualifiedName.get()] = parsedClass!!
         }
 
         return parsedClass
+    }
+
+    private fun parseEnum(enumDecl: EnumDeclaration, pkgName: String): ParsedClass {
+        return ParsedClass(
+            name = enumDecl.nameAsString,
+            packageName = pkgName,
+            fqcn = enumDecl.fullyQualifiedName.get(),
+            fields = enumDecl.entries.map {
+                ParsedField(
+                    name = it.nameAsString,
+                    type = enumDecl.fullyQualifiedName.get(),
+                    visibility = Visibility.PUBLIC,
+                    comment = extractMainComment(it.javadoc.getOrNull())
+                )
+            },
+            methods = emptyList(),
+            classComment = extractMainComment(enumDecl.javadoc.getOrNull()),
+            isEnum = true
+        )
+    }
+
+    private fun parseClassOrInterface(cls: ClassOrInterfaceDeclaration, pkgName: String): ParsedClass {
+        val methods = cls.methods.map { parseMethod(it, cls.nameAsString) }
+        val fields = cls.fields.flatMap { parseField(it) }
+
+        // Parse nested classes and enums, add as fields and also parse them recursively
+        val nestedClassFields = cls.members.filterIsInstance<ClassOrInterfaceDeclaration>().map { nested ->
+            val nestedParsed = parseClassOrInterface(nested, pkgName)
+            parsedClasses[nested.fullyQualifiedName.get()] = nestedParsed
+            ParsedField(
+                name = nested.nameAsString,
+                type = nested.fullyQualifiedName.orElse(nested.nameAsString),
+                visibility = Visibility.fromString(nested.accessSpecifier.toString().uppercase()),
+                comment = extractMainComment(nested.javadoc.getOrNull()),
+                isNestedClass = true
+            )
+        }
+        val nestedEnumFields = cls.members.filterIsInstance<EnumDeclaration>().map { nestedEnum ->
+            val nestedParsed = parseEnum(nestedEnum, pkgName)
+            parsedClasses[nestedEnum.fullyQualifiedName.get()] = nestedParsed
+            ParsedField(
+                name = nestedEnum.nameAsString,
+                type = nestedEnum.fullyQualifiedName.orElse(nestedEnum.nameAsString),
+                visibility = Visibility.PUBLIC,
+                comment = extractMainComment(nestedEnum.javadoc.getOrNull()),
+                isNestedClass = true
+            )
+        }
+
+        return ParsedClass(
+            name = cls.nameAsString,
+            packageName = pkgName,
+            fqcn = cls.fullyQualifiedName.get(),
+            fields = fields + nestedClassFields + nestedEnumFields,
+            methods = methods,
+            classComment = extractMainComment(cls.javadoc.getOrNull()),
+            extendedTypes = cls.extendedTypes.map { getFullyQualifiedName(it) },
+            implementedTypes = cls.implementedTypes.map { getFullyQualifiedName(it) },
+            constructors = cls.constructors.map { parseConstructor(it, cls.fullyQualifiedName.get()) },
+            isEnum = false
+        )
     }
 
     private fun parseConstructor(constructor: ConstructorDeclaration, className: String): ParsedMethod {

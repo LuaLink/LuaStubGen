@@ -4,5 +4,6 @@ data class ParsedField(
     val name: String,
     val type: String,
     val visibility: Visibility,
-    val comment: String?
+    val comment: String?,
+    val isNestedClass: Boolean = false
 )
