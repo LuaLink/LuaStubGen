@@ -159,7 +159,7 @@ class JavaSourceParser(private val jarFiles: List<File>) : ClassParser {
             methods = methods,
             classComment = extractMainComment(cls.javadoc.getOrNull()),
             extendedTypes = cls.extendedTypes.map { getFullyQualifiedName(it) },
-            implementedTypes = cls.implementedTypes.map { getFullyQualifiedName(it) },
+            implementedTypes = cls.implementedTypes.map { getFullyQualifiedName(it) } + "java.lang.Object", // Default to Object if no interfaces are implemented
             constructors = cls.constructors.map { parseConstructor(it, cls.fullyQualifiedName.get()) },
             isEnum = false
         )
