@@ -61,6 +61,20 @@ fun mapJavaTypeToLua(javaType: String): String {
         javaType in listOf("java.lang.Boolean", "boolean") -> "boolean"
         javaType in listOf("java.lang.Character", "java.lang.String", "char", "String") -> "string"
         javaType == "void" -> "nil"
+
+        // Check for common Java functional interfaces
+        javaType in listOf(
+            "java.util.function.Function",
+            "java.util.function.BiFunction",
+            "java.util.function.Consumer",
+            "java.util.function.BiConsumer",
+            "java.util.function.Supplier",
+            "java.util.function.Predicate",
+            "java.util.function.BiPredicate",
+            "java.lang.Runnable",
+            "java.util.concurrent.Callable"
+        ) || javaType.endsWith("Function") || javaType.endsWith("Consumer") || javaType.endsWith("Supplier") || javaType.endsWith("Predicate") -> "function"
+
         else -> javaType // Default case for other types
     }
 }
