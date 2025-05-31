@@ -19,6 +19,8 @@ class LuaEmitter {
 
         // Process fields (variables)
         parsedClass.fields.forEach { field ->
+            // Skip private fields
+            if (field.visibility == Visibility.PRIVATE) return@forEach
             sb.appendLine(
                 "---@field ${
                     field.visibility.toString().lowercase()
